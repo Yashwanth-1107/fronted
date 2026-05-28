@@ -77,16 +77,26 @@ elif menu == "View":
 
     try:
         r = requests.get(f"{server}/get_expenses")
-        data = r.json().get("expenses", [])
 
-        if data:
-            st.dataframe(pd.DataFrame(data))
+        st.write("Status:", r.status_code)  # DEBUG
+
+        if r.status_code == 200:
+
+            result = r.json()
+
+            data = result.get("expenses", [])
+
+            if isinstance(data, list) and len(data) > 0:
+                df = pd.DataFrame(data)
+                st.dataframe(df)
+            else:
+                st.info("No expenses found or empty response")
+
         else:
-            st.info("No expenses found")
+            st.error(f"Backend error: {r.text}")
 
     except Exception as e:
-        st.error(f"Error: {e}")
-
+        st.error(f"Request failed: {e}")
 # ======================================================
 # UPDATE EXPENSE
 # ======================================================
@@ -146,15 +156,33 @@ elif menu == "Analysis":
 
     try:
         r = requests.get(f"{server}/summary")
-        data = r.json().get("summary", [])
 
-        if data:
-            df = pd.DataFrame(data)
+        st.write("Status:", r.status_code)  # DEBUG
 
-            st.bar_chart(df.set_index("expense_category"))
-            st.dataframe(df)
+        if r.status_code == 200:
+
+            result = r.json()
+            data = result.get("summary", [])
+
+            if isinstance(data, list) and len(data) > 0:
+
+                df = pd.DataFrame(data)
+
+                # IMPORTANT SAFETY CHECK
+                if "expense_category" in df.columns and "total" in df.columns:
+
+                    st.bar_chart(df.set_index("expense_category"))
+                    st.dataframe(df)
+
+                else:
+                    st.error("Wrong data format from backend")
+                    st.write(df)
+
+            else:
+                st.info("No data for analysis")
+
         else:
-            st.info("No data available")
+            st.error(f"Backend error: {r.text}")
 
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Request failed: {e}")
