@@ -6,7 +6,7 @@ import pandas as pd
 # BACKEND URL (FIXED SAFE VERSION)
 # ======================================================
 
-server = st.secrets.get("be_server_url", "http://127.0.0.1:8000")
+server = st.secrets["be_server_url"]
 
 # ======================================================
 # PAGE CONFIG
