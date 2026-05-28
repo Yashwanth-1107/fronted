@@ -77,6 +77,7 @@ elif menu == "View":
 
     try:
         r = requests.get(f"{server}/get_expenses")
+        st.write(r.text)
 
         if r.status_code == 200:
 
