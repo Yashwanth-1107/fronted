@@ -2,20 +2,25 @@ import streamlit as st
 import requests
 import pandas as pd
 
-# =========================
-# BACKEND URL
-# =========================
-server = st.secrets["be_server_url"]
+# ======================================================
+# BACKEND URL (FIXED SAFE VERSION)
+# ======================================================
 
-# =========================
-# TITLE
-# =========================
+server = st.secrets.get("be_server_url", "http://127.0.0.1:8000")
+
+# ======================================================
+# PAGE CONFIG
+# ======================================================
 st.set_page_config(page_title="Expense Tracker", layout="centered")
+
+# ======================================================
+# TITLE
+# ======================================================
 st.title("💰 Expense Tracker Full Stack App")
 
-# =========================
+# ======================================================
 # MENU
-# =========================
+# ======================================================
 menu = st.sidebar.selectbox(
     "Menu",
     ["Add", "View", "Update", "Delete", "Analysis"]
@@ -30,8 +35,14 @@ if menu == "Add":
 
     title = st.text_input("Title")
     amount = st.number_input("Amount", min_value=1.0, step=1.0)
-    category = st.selectbox("Category", ["Food", "Travel", "Shopping", "Bills", "Entertainment", "Other"])
-    payment = st.selectbox("Payment", ["Cash", "UPI", "Card", "Net Banking"])
+    category = st.selectbox(
+        "Category",
+        ["Food", "Travel", "Shopping", "Bills", "Entertainment", "Other"]
+    )
+    payment = st.selectbox(
+        "Payment",
+        ["Cash", "UPI", "Card", "Net Banking"]
+    )
     date = st.date_input("Date")
     desc = st.text_area("Description")
 
@@ -50,7 +61,7 @@ if menu == "Add":
 
             try:
                 r = requests.post(f"{server}/add_expense", json=payload)
-                st.success(r.json().get("message", "Added Successfully"))
+                st.success(r.json().get("message", "Expense Added"))
             except Exception as e:
                 st.error(f"Error: {e}")
 
@@ -105,7 +116,7 @@ elif menu == "Update":
 
         try:
             r = requests.put(f"{server}/update_expense/{exp_id}", json=payload)
-            st.success(r.json().get("message", "Updated"))
+            st.success(r.json().get("message", "Updated Successfully"))
         except Exception as e:
             st.error(f"Error: {e}")
 
@@ -122,7 +133,7 @@ elif menu == "Delete":
 
         try:
             r = requests.delete(f"{server}/delete_expense/{exp_id}")
-            st.success(r.json().get("message", "Deleted"))
+            st.success(r.json().get("message", "Deleted Successfully"))
         except Exception as e:
             st.error(f"Error: {e}")
 
@@ -143,7 +154,7 @@ elif menu == "Analysis":
             st.bar_chart(df.set_index("expense_category"))
             st.dataframe(df)
         else:
-            st.info("No data for analysis")
+            st.info("No data available")
 
     except Exception as e:
         st.error(f"Error: {e}")
