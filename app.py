@@ -75,28 +75,19 @@ elif menu == "View":
 
     st.header("📄 All Expenses")
 
-    try:
-        r = requests.get(f"{server}/get_expenses")
+    r = requests.get(f"{server}/get_expenses")
 
-        st.write("Status:", r.status_code)  # DEBUG
+    if r.status_code == 200:
+        result = r.json()
 
-        if r.status_code == 200:
+        data = result.get("expenses", result.get("data", []))
 
-            result = r.json()
-
-            data = result.get("expenses", [])
-
-            if isinstance(data, list) and len(data) > 0:
-                df = pd.DataFrame(data)
-                st.dataframe(df)
-            else:
-                st.info("No expenses found or empty response")
-
+        if data:
+            st.dataframe(pd.DataFrame(data))
         else:
-            st.error(f"Backend error: {r.text}")
-
-    except Exception as e:
-        st.error(f"Request failed: {e}")
+            st.info("No data found")
+    else:
+        st.error(r.text)
 # ======================================================
 # UPDATE EXPENSE
 # ======================================================
@@ -154,35 +145,26 @@ elif menu == "Analysis":
 
     st.header("📊 Category Wise Analysis")
 
-    try:
-        r = requests.get(f"{server}/summary")
+    r = requests.get(f"{server}/summary")
 
-        st.write("Status:", r.status_code)  # DEBUG
+    if r.status_code == 200:
+        result = r.json()
 
-        if r.status_code == 200:
+        data = result.get("summary", result.get("data", []))
 
-            result = r.json()
-            data = result.get("summary", [])
+        if data:
 
-            if isinstance(data, list) and len(data) > 0:
+            df = pd.DataFrame(data)
 
-                df = pd.DataFrame(data)
-
-                # IMPORTANT SAFETY CHECK
-                if "expense_category" in df.columns and "total" in df.columns:
-
-                    st.bar_chart(df.set_index("expense_category"))
-                    st.dataframe(df)
-
-                else:
-                    st.error("Wrong data format from backend")
-                    st.write(df)
-
+            # auto-detect column names
+            if "expense_category" in df.columns and "total" in df.columns:
+                st.bar_chart(df.set_index("expense_category"))
             else:
-                st.info("No data for analysis")
+                st.write("Data format:", df)
+
+            st.dataframe(df)
 
         else:
-            st.error(f"Backend error: {r.text}")
-
-    except Exception as e:
-        st.error(f"Request failed: {e}")
+            st.info("No analysis data")
+    else:
+        st.error(r.text)
