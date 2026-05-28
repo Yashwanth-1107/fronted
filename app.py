@@ -75,19 +75,24 @@ elif menu == "View":
 
     st.header("📄 All Expenses")
 
-    r = requests.get(f"{server}/get_expenses")
+    try:
+        r = requests.get(f"{server}/get_expenses")
 
-    if r.status_code == 200:
-        result = r.json()
+        if r.status_code == 200:
 
-        data = result.get("expenses", result.get("data", []))
+            data = r.json().get("expenses", [])
 
-        if data:
-            st.dataframe(pd.DataFrame(data))
+            if data and len(data) > 0:
+                df = pd.DataFrame(data)
+                st.dataframe(df)
+            else:
+                st.info("No expenses found in database")
+
         else:
-            st.info("No data found")
-    else:
-        st.error(r.text)
+            st.error(f"Backend Error: {r.text}")
+
+    except Exception as e:
+        st.error(f"Request Failed: {e}")
 # ======================================================
 # UPDATE EXPENSE
 # ======================================================
@@ -145,26 +150,27 @@ elif menu == "Analysis":
 
     st.header("📊 Category Wise Analysis")
 
-    r = requests.get(f"{server}/summary")
+    try:
+        r = requests.get(f"{server}/summary")
 
-    if r.status_code == 200:
-        result = r.json()
+        if r.status_code == 200:
 
-        data = result.get("summary", result.get("data", []))
+            data = r.json().get("summary", [])
 
-        if data:
+            if data and len(data) > 0:
 
-            df = pd.DataFrame(data)
+                df = pd.DataFrame(data)
 
-            # auto-detect column names
-            if "expense_category" in df.columns and "total" in df.columns:
-                st.bar_chart(df.set_index("expense_category"))
+                if "expense_category" in df.columns and "total" in df.columns:
+                    st.bar_chart(df.set_index("expense_category"))
+
+                st.dataframe(df)
+
             else:
-                st.write("Data format:", df)
-
-            st.dataframe(df)
+                st.info("No data available for analysis")
 
         else:
-            st.info("No analysis data")
-    else:
-        st.error(r.text)
+            st.error(f"Backend Error: {r.text}")
+
+    except Exception as e:
+        st.error(f"Request Failed: {e}")
